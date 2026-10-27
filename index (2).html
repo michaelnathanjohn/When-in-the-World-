@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>When in the World</title>
+<meta name="description" content="A daily history and geography game. Spin a globe from any year between 1800 and today, read the borders, names and capitals, and guess the year.">
+<meta property="og:title" content="When in the World">
+<meta property="og:description" content="Spin a historical globe, read the borders and capitals, and guess the year. New set every day.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0f2a33">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#0f2a33;--panel:#163b47;--ink:#f1ece0;--dim:#9db8bd;--brass:#d8a24a;--sea:#1d5d73;--good:#7fd1a0;--bad:#e98a7c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#e4ecec;--panel:#d1dfe0;--ink:#12303a;--dim:#4a6a72;--brass:#8a5f12;--sea:#6aa0b3;--good:#1f7a49;--bad:#b0392b}}
+:root[data-theme="light"]{--bg:#e4ecec;--panel:#d1dfe0;--ink:#12303a;--dim:#4a6a72;--brass:#8a5f12;--sea:#6aa0b3;--good:#1f7a49;--bad:#b0392b}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:Palatino,"Palatino Linotype","Book Antiqua",Georgia,serif;line-height:1.5}
+main{max-width:780px;margin:0 auto;padding:20px 16px 40px;text-align:center}
+.tm{font-size:.45em;vertical-align:super;margin-left:2px;font-weight:400}h1{font-size:1.7rem;font-weight:600;margin:4px 0 2px}.sub{color:var(--dim);margin:0 0 14px}
+.bar{display:flex;justify-content:space-between;color:var(--dim);font-size:.95rem;margin-bottom:6px}
+#stage{position:relative;width:100%;aspect-ratio:1;max-width:720px;margin:0 auto;touch-action:none}
+canvas{width:100%;height:100%;display:block;cursor:grab}
+.zoom{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:6px}.zoom button{margin:0;padding:0;width:40px;height:40px;font-size:1.3rem;line-height:1}.zoom button#zr{font-size:.8rem}
+.hint{color:var(--dim);font-size:.9rem;margin:2px 0 14px}
+.year{font-size:3.2rem;font-weight:600;color:var(--brass);line-height:1.1;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--brass);height:36px}
+.ends{display:flex;justify-content:space-between;color:var(--dim);font-size:.85rem;margin-top:-6px}
+button{font:inherit;font-size:1.05rem;background:var(--brass);color:#1b1405;border:0;border-radius:6px;padding:11px 26px;margin-top:14px;cursor:pointer;font-weight:600}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--dim);margin-left:8px}button:disabled{opacity:.5;cursor:default}
+.card{background:var(--panel);border-radius:8px;padding:14px 16px;margin-top:14px;text-align:left}.card b{color:var(--brass)}
+.pts{font-size:1.5rem;font-weight:600}.hide{display:none}
+footer{max-width:780px;margin:0 auto;padding:0 16px 28px;text-align:center;color:var(--dim);font-size:.85rem}footer a{color:var(--dim)}
+.menu button{display:block;width:100%;margin:10px 0 0}.menu small{display:block;font-weight:400;opacity:.8;font-size:.85rem}
+.menu .big{font-size:1.25rem;padding:16px}.menu .locked{opacity:.65}.menu details{margin-top:16px;color:var(--dim)}.menu summary{cursor:pointer;color:var(--ink)}
+.kicker{color:var(--dim);margin:0 0 6px;font-size:.92rem}.kicker b{color:var(--brass);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin:14px 0 6px}.stats div{background:var(--bg);border-radius:6px;padding:8px 2px}
+.stats b{display:block;font-size:1.4rem;color:var(--brass);font-variant-numeric:tabular-nums}.stats span{font-size:.72rem;color:var(--dim);line-height:1.2;display:block}
+table.bd{width:100%;border-collapse:collapse;font-size:.9rem;margin:10px 0;font-variant-numeric:tabular-nums}
+table.bd th,table.bd td{padding:6px 4px;border-bottom:1px solid rgba(157,184,189,.25);text-align:right}table.bd th:first-child,table.bd td:first-child{text-align:left}
+table.bd th{color:var(--dim);font-weight:400;font-size:.75rem;line-height:1.2}.tag{font-size:.7rem;color:var(--dim);border:1px solid var(--dim);border-radius:3px;padding:0 3px}
+.histo{display:flex;align-items:flex-end;gap:3px;height:60px;margin:10px 0 2px}.histo i{flex:1;background:var(--dim);opacity:.45;border-radius:2px 2px 0 0}.histo i.me{background:var(--brass);opacity:1}
+#res button{margin-right:8px}#res button.alt{margin-left:0}
+</style></head><body><main>
+<h1>When in the World<sup class="tm">™</sup></h1><p class="sub">What year is this globe? Read the borders and names. Their era gives it away.</p>
+<div id="menu" class="menu card"></div>
+<div id="game" class="hide"><div class="bar"><span id="rd"></span><span id="tot"></span></div>
+<div id="stage" class=""><canvas id="cv" tabindex="0" aria-label="Globe. Drag to spin, arrow keys also work."></canvas><div class="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zr" aria-label="Reset zoom">1×</button></div></div>
+<p class="hint">Drag to spin · scroll, pinch or use + / − to zoom. Capitals (◉) and major cities appear once you zoom in.</p>
+<div id="guess"><div class="year" id="yr">1960</div>
+<input id="sl" type="range" min="1800" max="2025" value="1960" aria-label="Guess a year">
+<div class="ends"><span id="e1">1800</span><span id="e2">2025</span></div>
+<button id="go">Lock in guess</button><button id="hint" class="alt">Hint (−150)</button></div>
+<div id="res" class="card hide"></div><button id="next" class="hide">Next globe</button></div>
+<p id="err" class="card hide">Something went wrong.</p>
+</main>
+<footer>Map data: <a href="https://icr.ethz.ch/data/cshapes/">CShapes 2.0</a> (ETH Zürich, CC BY-NC-SA 4.0) and <a href="https://github.com/aourednik/historical-basemaps">Historical Basemaps</a> (GPL v3). <a href="credits.html">Credits, licences and privacy</a><br>© 2026 When in the World™</footer>
+<script src="data/globes-historical-basemaps.js"></script>
+<script src="data/globes-cshapes.js"></script>
+<script>/* if the map files were uploaded next to index.html instead of inside data/, load them from there */
+if(!window.HB_GLOBES)document.write('<script src="globes-historical-basemaps.js"><\/script>');
+if(!window.CS_GLOBES)document.write('<script src="globes-cshapes.js"><\/script>');</script>
+<script>
+// every globe comes from data/globes.js (built by build_globes.py): {y, lo, hi, note, f:[[shape, name]], caps:[[lat, lon, name]], cities:[[lat, lon, tier, name]]}
+const GL=(window.HB_GLOBES||[]).map(g=>({...g,S:HB_SHAPES})).concat((window.CS_GLOBES||[]).map(g=>({...g,S:CS_SHAPES}))),THIS_YEAR=new Date().getFullYear();
+if(GL.length&&GL[GL.length-1].hi<THIS_YEAR)GL[GL.length-1].hi=THIS_YEAR;   // nothing has changed since the last globe
+const MAXY=Math.max(THIS_YEAR,GL.length?GL[GL.length-1].hi:2025);
+// ---------- settings you can change ----------
+const CONFIG={
+  LAUNCH:"2026-10-27",   // puzzle #1 is played on this date (players' local time). Set it to your launch day.
+  UNLIMITED:"locked",    // "locked" shows Unlimited play as "coming soon"; "free" lets anyone play it
+  API:"/api"             // the scoreboard (Cloudflare Pages Functions in functions/api)
+};
+const MODES={easy:{pen:15,n:5,t:"Easy"},normal:{pen:25,n:8,t:"Normal"},hard:{pen:50,n:12,t:"Hard"},daily:{pen:25,n:5,t:"Daily"}};
+const _d=new Date(),TODAY=_d.getFullYear()+"-"+String(_d.getMonth()+1).padStart(2,"0")+"-"+String(_d.getDate()).padStart(2,"0");
+// 18 muted atlas colours, picked so every pair is clearly different (OKLab distance >= 0.076)
+const PAL=["#d8b86a","#967dc3","#7cebfe","#e3aeef","#bf784f","#64c7a7","#b3e9a7","#ec9695","#fdcac0","#97aef4","#a2a453","#ca84b3","#d6d2fd","#f2d585","#9dcce4","#c8a4c3","#b7cca4","#c19188"];
+const LZ=2; // country and city names stay hidden until you zoom in this far
+function lab(h){const f=i=>{const c=parseInt(h.slice(i,i+2),16)/255;return c<=.04045?c/12.92:((c+.055)/1.055)**2.4},r=f(1),g=f(3),b=f(5);
+  const l=Math.cbrt(.4122*r+.5363*g+.0514*b),m=Math.cbrt(.2119*r+.6807*g+.1074*b),q=Math.cbrt(.0883*r+.2817*g+.6300*b);
+  return[.2105*l+.7936*m-.0041*q,1.978*l-2.4286*m+.4506*q,.0259*l+.7828*m-.8087*q]}
+const PLAB=PAL.map(lab),dE=(i,j)=>Math.hypot(PLAB[i][0]-PLAB[j][0],PLAB[i][1]-PLAB[j][1],PLAB[i][2]-PLAB[j][2]);
+const $=id=>document.getElementById(id),cv=$("cv"),ctx=cv.getContext("2d"),css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let order=[],idx=0,total=0,mode="normal",hintUsed=false,marks=[],lon0=0,lat0=20,drag=null,auto=true,zoom=1,FEATS=[],LAB=[],proj,path;
+window.onerror=(m,s,l)=>{$("err").textContent="Something went wrong: "+m+" (line "+l+")";$("err").classList.remove("hide")};
+const rad=Math.PI/180;
+const OFFS=[[0,0]];for(const r of [1,2,3])for(const [x,y] of [[0,1],[0,-1],[1.6,0],[-1.6,0],[1.2,.8],[-1.2,.8],[1.2,-.8],[-1.2,-.8]])OFFS.push([x*r,y*r]);
+if(!GL.length){$("menu").classList.add("hide");$("err").textContent="The map files did not load. Make sure globes-cshapes.js and globes-historical-basemaps.js were uploaded (inside a data folder, or next to index.html).";$("err").classList.remove("hide")}
+function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d}
+function hash(s){let h=0;for(const c of s)h=h*31+c.charCodeAt(0)|0;return Math.abs(h)}
+let BASE=null;
+function prep(){if(!BASE)BASE=LAND.flatMap(poly=>poly.map(dens));
+  // join pieces that share a name (e.g. two "Italy" shapes) so they get one colour and one label
+  const byName=new Map();
+  for(const[si,nm]of GL[order[idx]].f){const f={n:nm,...GL[order[idx]].S[si]},o=byName.get(f.n);
+    if(!o)byName.set(f.n,{n:f.n,g:f.g,a:f.a,c:f.c,big:f.a});else{o.g=o.g.concat(f.g);o.a+=f.a;if(f.a>o.big){o.big=f.a;o.c=f.c}}}
+  const m=[...byName.values()];
+  // neighbours: walk every border at 0.5 degree steps and treat shapes within ~1 degree of each other as touching
+  const cell=new Map(),nb=m.map(()=>new Set()),key=(x,y)=>(((x%720)+720)%720)+","+y;
+  const mark=(lon,lat,i)=>{const k=key(Math.round(lon*2),Math.round(lat*2));let c=cell.get(k);if(!c)cell.set(k,c=new Set());c.add(i)};
+  m.forEach((f,i)=>f.g.forEach(poly=>poly.forEach(r=>{for(let j=0;j<r.length;j++){const a=r[j],b=r[(j+1)%r.length],st=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])*2));
+    if(Math.abs(b[0]-a[0])>180){mark(a[0],a[1],i);continue}
+    for(let t=0;t<st;t++)mark(a[0]+(b[0]-a[0])*t/st,a[1]+(b[1]-a[1])*t/st,i)}})));
+  cell.forEach((s,k)=>{const[x,y]=k.split(",").map(Number);for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){const o=cell.get(key(x+dx,y+dy));if(o)for(const a of s)for(const b of o)if(a!==b)nb[a].add(b)}});
+  // DSatur colouring: colour the most constrained shape first, never reuse a neighbour's colour,
+  // and pick the colour that is most different from all neighbouring colours
+  const cols=new Array(m.length).fill(-1),use=new Array(PAL.length).fill(0);
+  for(let n=0;n<m.length;n++){let best=-1,bs=-1,bd=-1;
+    m.forEach((_,i)=>{if(cols[i]>=0)return;const sat=new Set([...nb[i]].map(j=>cols[j]).filter(c=>c>=0)).size;if(sat>bs||sat===bs&&nb[i].size>bd){best=i;bs=sat;bd=nb[i].size}});
+    const nc=[...nb[best]].map(j=>cols[j]).filter(c=>c>=0);let pick=0,ps=-1;
+    PAL.forEach((_,c)=>{if(nc.includes(c))return;const sep=nc.length?Math.min(...nc.map(o=>dE(c,o))):1,sc=sep-use[c]*.002;if(sc>ps){ps=sc;pick=c}});
+    cols[best]=pick;use[pick]++}
+  FEATS=m.map((f,i)=>({f,col:PAL[cols[i]],ci:cols[i],nb:nb[i],rings:f.g.flatMap(poly=>poly.map(dens))}));
+  LAB=m.filter(f=>f.n!=="Antarctica").sort((a,b)=>b.a-a.a)}
+function vec(lon,lat){const p=lat*rad,l=lon*rad;return[Math.cos(p)*Math.sin(l),Math.sin(p),Math.cos(p)*Math.cos(l)]}
+function dens(r){const out=[];let n=r.length;if(n>1&&r[0][0]===r[n-1][0]&&r[0][1]===r[n-1][1])n--;
+  for(let i=0;i<n;i++){const a=vec(r[i][0],r[i][1]),b=vec(r[(i+1)%n][0],r[(i+1)%n][1]);out.push(a[0],a[1],a[2]);
+    const th=Math.acos(Math.max(-1,Math.min(1,a[0]*b[0]+a[1]*b[1]+a[2]*b[2]))),k=Math.ceil(th/.045);
+    if(k>1&&th<3.1){const s=Math.sin(th);for(let j=1;j<k;j++){const t=j/k,w1=Math.sin((1-t)*th)/s,w2=Math.sin(t*th)/s;out.push(a[0]*w1+b[0]*w2,a[1]*w1+b[1]*w2,a[2]*w1+b[2]*w2)}}}
+  return Float32Array.from(out)}
+function setZoom(z){zoom=Math.min(14,Math.max(1,z));$("zr").textContent=(zoom<10?zoom.toFixed(1):Math.round(zoom))+"×"}
+function draw(){if(!cv.width||!order.length||!BASE||!$("game").offsetParent||$("stage").classList.contains("hide"))return;
+  const W=cv.width,H=cv.height,d=W/cv.getBoundingClientRect().width,M=Math.min(W,H);
+  // f = 1 when the whole globe is in view; it eases to 0 as you zoom in (the shadow under the globe fades out)
+  const f=Math.max(0,Math.min(1,(1.8-zoom)/.8));
+  const R=M*(.43-.02*f)*zoom,cx=W/2,cy=H/2-H*.03*f;
+  const cl=Math.cos(lon0*rad),sl=Math.sin(lon0*rad),cp=Math.cos(lat0*rad),sp=Math.sin(lat0*rad);
+  const rot=(x,y,z)=>{const x1=x*cl-z*sl,z1=x*sl+z*cl,y1=y*cp-z1*sp;return[x1,y1,y*sp+z1*cp]};
+  const P=(lon,lat)=>{const v=vec(lon,lat),r=rot(v[0],v[1],v[2]);return[cx+r[0]*R,cy-r[1]*R,r[2]]};
+  ctx.clearRect(0,0,W,H);
+  // soft shadow on the "table" under the globe
+  if(f>0){const sy=cy+R*1.06,sh=ctx.createRadialGradient(cx,sy,0,cx,sy,R*.8);sh.addColorStop(0,`rgba(0,0,0,${.38*f})`);sh.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.save();ctx.translate(cx,sy);ctx.scale(1,.12);ctx.translate(-cx,-sy);ctx.fillStyle=sh;ctx.beginPath();ctx.arc(cx,sy,R*.8,0,7);ctx.fill();ctx.restore()}
+  // the sphere: ocean, then land, then the ink grid, then varnish and shading
+  const g=ctx.createRadialGradient(cx-R*.3,cy-R*.35,R*.1,cx,cy,R);g.addColorStop(0,css("--sea"));g.addColorStop(1,"#0b2a38");
+  ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fillStyle=g;ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.clip();
+  ctx.lineWidth=.8*d;ctx.strokeStyle="rgba(25,35,35,.6)";
+  ctx.beginPath();for(const ring of BASE)trace(ring);ctx.fillStyle="#7d8b78";ctx.fill("evenodd");
+  for(const o of FEATS){ctx.beginPath();for(const ring of o.rings)trace(ring);ctx.fillStyle=o.col;ctx.fill("evenodd");ctx.stroke()}
+  // engraved-style grid in brown ink: every 15 degrees, plus the equator, tropics and polar circles
+  const line=(pts)=>{let pen=false;for(const[l,a]of pts){const p=P(l,a);if(p[2]>0){pen?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);pen=true}else pen=false}};
+  const par=a=>{const o=[];for(let l=-180;l<=180;l+=3)o.push([l,a]);return o},mer=l=>{const o=[];for(let a=-90;a<=90;a+=3)o.push([l,a]);return o};
+  ctx.strokeStyle="rgba(60,38,15,.28)";ctx.lineWidth=.8*d;ctx.beginPath();
+  for(let a=-75;a<=75;a+=15)if(a)line(par(a));for(let l=-180;l<180;l+=15)line(mer(l));ctx.stroke();
+  ctx.strokeStyle="rgba(70,40,12,.6)";ctx.lineWidth=1.5*d;ctx.beginPath();line(par(0));ctx.stroke();
+  ctx.setLineDash([7*d,5*d]);ctx.lineWidth=1.1*d;ctx.beginPath();line(par(23.44));line(par(-23.44));ctx.stroke();
+  ctx.setLineDash([2*d,4*d]);ctx.beginPath();line(par(66.56));line(par(-66.56));ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(150,105,45,.14)";ctx.fillRect(0,0,W,H);   // aged varnish tint
+  ctx.fillStyle=grain();ctx.fillRect(0,0,W,H);
+  const L=ctx.createRadialGradient(cx-R*.38,cy-R*.42,R*.1,cx-R*.12,cy-R*.12,R*1.22);L.addColorStop(0,"rgba(255,244,215,.22)");L.addColorStop(.5,"rgba(0,0,0,0)");L.addColorStop(1,"rgba(10,5,0,.6)");
+  ctx.fillStyle=L;ctx.fillRect(0,0,W,H);
+  ctx.restore();
+  function trace(ring){const n=ring.length/3,rp=new Float32Array(n*3);let any=false;
+    for(let i=0;i<n;i++){const r=rot(ring[i*3],ring[i*3+1],ring[i*3+2]);rp[i*3]=r[0];rp[i*3+1]=r[1];rp[i*3+2]=r[2];if(r[2]>=0)any=true}
+    if(!any)return;const out=[];
+    for(let i=0;i<n;i++){const j=(i+n-1)%n,cz=rp[i*3+2],pz=rp[j*3+2],cin=cz>=0,pin=pz>=0;
+      if(cin!==pin){const t=pz/(pz-cz),x=rp[j*3]+(rp[i*3]-rp[j*3])*t,y=rp[j*3+1]+(rp[i*3+1]-rp[j*3+1])*t,L=Math.hypot(x,y)||1;out.push([x/L,y/L,1])}
+      if(cin)out.push([rp[i*3],rp[i*3+1],0])}
+    const m=out.length;if(m<3)return;
+    for(let k=0;k<m;k++){const p=out[k],q=out[(k+1)%m];k?ctx.lineTo(cx+p[0]*R,cy-p[1]*R):ctx.moveTo(cx+p[0]*R,cy-p[1]*R);
+      if(p[2]&&q[2]){const a1=Math.atan2(p[1],p[0]);let da=Math.atan2(q[1],q[0])-a1;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
+        const st=Math.max(1,Math.ceil(Math.abs(da)/.07));for(let s=1;s<st;s++){const a=a1+da*s/st;ctx.lineTo(cx+Math.cos(a)*R,cy-Math.sin(a)*R)}}}
+    ctx.closePath()}
+  const boxes=[],G=GL[order[idx]],INK="rgba(10,30,40,.9)";let curFont="";
+  const hit=b=>boxes.some(o=>b[0]<o[2]&&b[2]>o[0]&&b[1]<o[3]&&b[3]>o[1]);
+  // draws a label unless it would overlap one already drawn (force draws it anyway)
+  // clean upright sans-serif with a thin dark outline reads far better at small sizes than italic serif
+  const FONT='"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
+  const put=(txt,x,y,fs,weight,anchor,dx,force,alpha,queue)=>{const f=`${weight} ${fs.toFixed(1)}px ${FONT}`;if(f!==curFont){ctx.font=curFont=f}
+    const w=ctx.measureText(txt).width,x0=anchor==="l"?x+dx:x-w/2,b=[x0-1.5*d,y-fs*.58,x0+w+1.5*d,y+fs*.58];
+    if(b[2]<0||b[0]>W||b[3]<0||b[1]>H)return false;if(!force&&hit(b))return false;boxes.push(b);if(queue){queue.push([txt,x0,y,f,fs,alpha||1]);return true}
+    ctx.globalAlpha=alpha||1;ctx.textAlign="left";ctx.lineWidth=Math.max(2.2*d,fs*.22);ctx.strokeStyle=INK;ctx.strokeText(txt,x0,y);ctx.fillStyle="#fff";ctx.fillText(txt,x0,y);ctx.globalAlpha=1;return true};
+  ctx.textBaseline="middle";ctx.lineJoin="round";ctx.miterLimit=2;
+  // Every country on the visible side is named; text size follows its size on screen.
+  // Big countries are placed first (their names matter most), then smaller ones look for a free spot nearby.
+  // A label that cannot find a free spot nearby is still drawn, but faded so it does not hide readable ones.
+  const todo=[];for(const f of LAB){const p=P(f.c[0],f.c[1]);if(p[2]<.12)continue;const s=Math.sqrt(f.a)*rad*R;
+    todo.push({f,p,s,fs:Math.round(Math.max(9*d,Math.min(15*d,s*.3))*2)/2})}
+  todo.sort((a,b)=>b.s-a.s);let forced=0;const Q=[];
+  for(const t of todo){const reach=Math.max(t.s*.4,t.fs*2.4);let ok=false;
+    for(const [ox,oy] of OFFS){const dx=ox*t.fs*1.25,dy=oy*t.fs*1.25;if(Math.hypot(dx,dy)>reach)continue;
+      if(put(t.f.n,t.p[0]+dx,t.p[1]+dy,t.fs,600,"c",0,false,1,Q)){ok=true;break}}
+    if(!ok){forced++;put(t.f.n,t.p[0],t.p[1],t.fs,600,"c",0,true,.4,Q)}}
+  // faded (crowded) names go underneath, readable ones on top
+  Q.sort((a,b)=>a[5]-b[5]);ctx.textAlign="left";
+  for(const[txt,x0,y,f,fs,al]of Q){if(f!==curFont)ctx.font=curFont=f;ctx.globalAlpha=al;ctx.lineWidth=Math.max(2.2*d,fs*.22);ctx.strokeStyle=INK;ctx.strokeText(txt,x0,y);ctx.fillStyle="#fff";ctx.fillText(txt,x0,y)}ctx.globalAlpha=1;
+  window.__forced=forced;
+  // capitals (ringed dot) and major cities (plain dot), named as they were in this globe's years
+  const dot=(p,cap)=>{ctx.fillStyle="#fff";ctx.strokeStyle=INK;ctx.lineWidth=d;ctx.beginPath();ctx.arc(p[0],p[1],(cap?3.4:2.6)*d,0,7);ctx.fill();ctx.stroke();
+    if(cap){ctx.fillStyle=INK;ctx.beginPath();ctx.arc(p[0],p[1],1.3*d,0,7);ctx.fill()}};
+  if(zoom>=LZ){const fs=11*d;
+    for(const c of G.caps){const p=P(c[1],c[0]);if(p[2]<.12)continue;dot(p,true);for(const k of [0,1,-1])if(put(c[2],p[0],p[1]+k*fs,fs,500,"l",6*d,false))break}
+    for(const c of G.cities){if(zoom<[LZ,2.8,4.5][c[2]-1])continue;const p=P(c[1],c[0]);if(p[2]<.12)continue;if(put(c[3],p[0],p[1],fs,400,"l",6*d,false))dot(p,false)}}
+  // rim darkening and a varnish highlight
+  const s=ctx.createRadialGradient(cx,cy,R*.72,cx,cy,R);s.addColorStop(0,"rgba(0,0,0,0)");s.addColorStop(1,"rgba(15,8,0,.42)");
+  ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fillStyle=s;ctx.fill();
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.clip();const k=.35+.65*f;
+  ctx.translate(cx-R*.4,cy-R*.46);ctx.rotate(-.6);ctx.scale(1,.62);
+  let hl=ctx.createRadialGradient(0,0,0,0,0,R*.42);hl.addColorStop(0,`rgba(255,252,240,${.26*k})`);hl.addColorStop(.45,`rgba(255,250,235,${.1*k})`);hl.addColorStop(1,"rgba(255,255,255,0)");
+  ctx.fillStyle=hl;ctx.beginPath();ctx.arc(0,0,R*.42,0,7);ctx.fill();
+  hl=ctx.createRadialGradient(0,0,0,0,0,R*.07);hl.addColorStop(0,`rgba(255,255,255,${.3*k})`);hl.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=hl;ctx.beginPath();ctx.arc(0,0,R*.07,0,7);ctx.fill();
+  ctx.restore();
+}
+function grain(){if(GR)return GR;const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),im=x.createImageData(128,128);
+  for(let i=0;i<im.data.length;i+=4){im.data[i]=im.data[i+1]=im.data[i+2]=Math.random()*255;im.data[i+3]=20}x.putImageData(im,0,0);return GR=ctx.createPattern(c,"repeat")}
+function tick(){if(auto&&!drag&&zoom<1.5&&!matchMedia("(prefers-reduced-motion: reduce)").matches)lon0+=.15;requestAnimationFrame(tick);if(!drag&&(Math.abs(mom.x)>.02||Math.abs(mom.y)>.02)){lon0+=mom.x;lat0=Math.max(-75,Math.min(75,lat0+mom.y));mom.x*=.94;mom.y*=.94}draw()}
+const ptrs=new Map(),mom={x:0,y:0};let pinch=0,lastMove=0,GR=null;
+cv.addEventListener("pointerdown",e=>{ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});cv.setPointerCapture(e.pointerId);auto=false;drag=true;pinch=0;mom.x=mom.y=0});
+cv.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+  if(ptrs.size===2){ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});const[A,B]=[...ptrs.values()],dd=Math.hypot(A.x-B.x,A.y-B.y);if(pinch)setZoom(zoom*dd/pinch);pinch=dd;return}
+  mom.x=-(e.clientX-p.x)*.4/zoom;mom.y=(e.clientY-p.y)*.3/zoom;lastMove=performance.now();lon0-=(e.clientX-p.x)*.4/zoom;lat0=Math.max(-75,Math.min(75,lat0+(e.clientY-p.y)*.3/zoom));ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY})});
+const up=e=>{ptrs.delete(e.pointerId);pinch=0;drag=ptrs.size>0;if(performance.now()-lastMove>80)mom.x=mom.y=0};cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+cv.addEventListener("wheel",e=>{e.preventDefault();setZoom(zoom*Math.exp(-e.deltaY*.002))},{passive:false});
+$("zi").onclick=()=>setZoom(zoom*1.6);$("zo").onclick=()=>setZoom(zoom/1.6);$("zr").onclick=()=>setZoom(1);
+cv.addEventListener("keydown",e=>{const k={ArrowLeft:[-10,0],ArrowRight:[10,0],ArrowUp:[0,8],ArrowDown:[0,-8]}[e.key];if(k){lon0+=k[0];lat0=Math.max(-75,Math.min(75,lat0+k[1]));auto=false;e.preventDefault()}if(e.key==="+"||e.key==="=")setZoom(zoom*1.4);if(e.key==="-")setZoom(zoom/1.4)});
+$("sl").oninput=e=>$("yr").textContent=e.target.value;
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let dev=store.get("wyitg-device",null);if(!dev){dev=(self.crypto&&crypto.randomUUID)?crypto.randomUUID():"d"+Math.random().toString(36).slice(2)+Date.now().toString(36);store.set("wyitg-device",dev)}
+let rounds=[];
+const fmt=n=>n.toLocaleString("en-US"),span=G=>G.lo===G.hi?""+G.lo:G.lo+"–"+G.hi,markOf=r=>r.off===0?"🟩":r.off<=10?"🟨":"🟥";
+
+// ---------- daily schedule ----------
+// Puzzle #1 is CONFIG.LAUNCH. History is split into five eras with the same number of globes in each;
+// every day gets one globe from each era, in a shuffled order. Within an era no globe repeats until
+// all of that era's globes have been used (about three weeks), then the era is reshuffled.
+function dayNumber(){const[a,b,c]=CONFIG.LAUNCH.split("-").map(Number),n=new Date();
+  return Math.max(1,Math.round((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())-Date.UTC(a,b-1,c))/864e5)+1)}
+const DAY=dayNumber();
+const ERAS=(()=>{const ids=[...GL.keys()].sort((a,b)=>GL[a].lo-GL[b].lo);return [0,1,2,3,4].map(j=>ids.slice(Math.round(j*ids.length/5),Math.round((j+1)*ids.length/5)))})();
+function shuffled(arr,seed){const a=[...arr],r=rng(hash(seed));for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+// each era's order for cycle c; globes used at the end of the previous cycle are moved back so nothing repeats within about two weeks
+const CYC={};
+function cycleOrder(j,c){const key=j+":"+c;if(CYC[key])return CYC[key];const P=shuffled(ERAS[j],"era"+j+"-cycle"+c);
+  if(c>0){const prev=cycleOrder(j,c-1),L=prev.length,last=new Map(prev.map((g,p)=>[g,p])),left=[...P],out=[];
+    // fill each day with the first shuffled globe that was last seen at least 15 days ago (or the longest ago if none)
+    for(let t=0;t<P.length;t++){const gap=g=>(L-last.get(g))+t;let k=left.findIndex(g=>gap(g)>=15);
+      if(k<0)k=left.reduce((bi,g,i)=>gap(g)>gap(left[bi])?i:bi,0);out.push(left.splice(k,1)[0])}
+    return CYC[key]=out}
+  return CYC[key]=P}
+function dailySet(n){const k=n-1;return shuffled(ERAS.map((era,j)=>cycleOrder(j,Math.floor(k/era.length))[k%era.length]),"day"+n)}
+
+// ---------- screens ----------
+function show(id,on){$(id).classList.toggle("hide",!on)}
+let cdTimer=null;
+function untilMidnight(){const n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1);let s=Math.max(0,Math.floor((m-n)/1000));
+  const h=Math.floor(s/3600);s-=h*3600;const mi=Math.floor(s/60);s-=mi*60;return h+"h "+String(mi).padStart(2,"0")+"m "+String(s).padStart(2,"0")+"s"}
+function tickCountdown(){document.querySelectorAll(".cd").forEach(e=>e.textContent=untilMidnight());if(dayNumber()!==DAY)location.reload()}
+function stats(){const s=store.get("wyitg-stats",{played:0,streak:0,best:0,last:0,sum:0,top:0});if(s.last<DAY-1)s.streak=0;return s}
+function home(){mode="daily";show("game",false);show("menu",true);const s=stats(),rec=store.get("wyitg-day-"+TODAY,null);
+  const label=rec&&rec.done?"See today's results":rec&&rec.rounds.length?"Continue today's set":"Play today's 5 globes";
+  let h=`<p class="kicker">Daily set #${DAY} · ${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}</p>
+  <button class="big" id="playDaily">${label}<small>One globe from each era of history. Same set for everyone today.</small></button>
+  ${rec&&rec.done?`<p class="kicker" style="margin-top:10px">Next set in <b class="cd">${untilMidnight()}</b></p>`:""}
+  <div class="stats"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.streak}</b><span>Current streak</span></div><div><b>${s.best}</b><span>Best streak</span></div><div><b>${s.played?fmt(Math.round(s.sum/s.played)):"–"}</b><span>Average score</span></div></div>`;
+  if(CONFIG.UNLIMITED==="free")h+=`<p class="kicker" style="margin-top:16px">Unlimited play: random globes from all ${GL.length}</p>
+    <button data-m="easy">Easy<small>5 globes. 15 points lost per year off.</small></button><button data-m="normal">Normal<small>8 globes. 25 points lost per year off.</small></button><button data-m="hard">Hard<small>12 globes. 50 points lost per year off. No hints.</small></button>`;
+  else h+=`<button class="alt locked" disabled>Unlimited play<small>Coming soon: play as many globes as you like.</small></button>`;
+  h+=`<details><summary>How to play</summary><p>Each globe shows the world as it was at some point since 1800. Spin it, zoom in to read country names, capitals and cities, then slide to the year you think it shows.</p>
+  <p>Every globe is worth up to 1,000 points. If the map was accurate for a span of years, any year in that span scores full marks. You lose 25 points for each year you are off. A hint narrows the slider to about 25 years but costs 150 points.</p></details>`;
+  $("menu").innerHTML=h;$("playDaily").onclick=startDaily;
+  document.querySelectorAll("#menu button[data-m]").forEach(b=>b.onclick=()=>startUnlimited(b.dataset.m));
+  clearInterval(cdTimer);cdTimer=setInterval(tickCountdown,1000)}
+function begin(){clearInterval(cdTimer);show("menu",false);show("game",true);show("stage",true);document.querySelector(".hint").classList.remove("hide");size();
+  if(idx>=order.length){finish();return}load()}
+function startDaily(){mode="daily";order=dailySet(DAY);const rec=store.get("wyitg-day-"+TODAY,null);
+  if(rec&&rec.done){show("menu",false);show("game",true);showFinal(rec);return}
+  rounds=rec?rec.rounds:[];idx=rounds.length;total=rounds.reduce((a,r)=>a+r.pts,0);marks=rounds.map(markOf);begin()}
+function startUnlimited(m){mode=m;order=[...GL.keys()].sort(()=>Math.random()-.5).slice(0,MODES[m].n);rounds=[];idx=0;total=0;marks=[];begin()}
+
+function load(){hintUsed=false;$("sl").min=1800;$("sl").max=MAXY;$("e1").textContent=1800;$("e2").textContent=MAXY;
+  $("hint").disabled=false;$("hint").textContent="Hint (−150)";$("hint").classList.toggle("hide",mode==="hard");
+  lon0=20;lat0=25;auto=true;setZoom(1);prep();
+  $("rd").textContent=(mode==="daily"?`Daily #${DAY} · `:`${MODES[mode].t} · `)+`Globe ${idx+1} of ${order.length}`;$("tot").textContent=`Score ${fmt(total)}`;
+  show("res",false);show("next",false);show("guess",true)}
+$("hint").onclick=()=>{if(hintUsed)return;hintUsed=true;const G=GL[order[idx]],a=Math.max(1800,G.lo-12),b=Math.min(MAXY,G.hi+12);
+  $("sl").min=a;$("sl").max=b;$("sl").value=Math.min(b,Math.max(a,+$("sl").value));$("yr").textContent=$("sl").value;$("e1").textContent=a;$("e2").textContent=b;
+  $("hint").disabled=true;$("hint").textContent="Hint used (−150)"};
+$("go").onclick=()=>{const G=GL[order[idx]],y=+$("sl").value,off=y<G.lo?G.lo-y:y>G.hi?y-G.hi:0,pts=Math.max(0,Math.round(1000-MODES[mode].pen*off)-(hintUsed?150:0));
+  const r={guess:y,off,pts,hint:hintUsed};rounds.push(r);marks.push(markOf(r));total+=pts;$("tot").textContent=`Score ${fmt(total)}`;show("guess",false);
+  if(mode==="daily")store.set("wyitg-day-"+TODAY,{day:DAY,date:TODAY,rounds,done:false});   // progress is saved, so reloading cannot re-roll a globe
+  const col=off===0?"var(--good)":off<=10?"var(--brass)":"var(--bad)";
+  $("res").innerHTML=`<div class="pts" style="color:${col}">+${fmt(pts)} points</div><p>You guessed <b>${y}</b>. This globe shows the world ${G.lo===G.hi?`in <b>${G.lo}</b>`:`from <b>${G.lo}</b> to <b>${G.hi}</b>`}${G.lo===G.hi?"":" (full marks for any year in that span)"}${off?`, so you were ${off} year${off>1?"s":""} off`:""}.</p><p>${G.note}</p>`;
+  show("res",true);$("next").textContent=idx===order.length-1?"See your results":"Next globe";show("next",true)};
+$("next").onclick=()=>{if(idx<order.length-1){idx++;load();return}finish()};
+
+function finish(){const rec={day:DAY,date:TODAY,rounds,total:rounds.reduce((a,r)=>a+r.pts,0),done:true};
+  if(mode==="daily"){const prev=store.get("wyitg-day-"+TODAY,null);store.set("wyitg-day-"+TODAY,rec);
+    if(!(prev&&prev.done)){const s=store.get("wyitg-stats",{played:0,streak:0,best:0,last:0,sum:0,top:0});
+      if(s.last!==DAY){s.streak=s.last===DAY-1?s.streak+1:1;s.best=Math.max(s.best,s.streak);s.played++;s.sum+=rec.total;s.top=Math.max(s.top,rec.total);s.last=DAY;store.set("wyitg-stats",s)}}}
+  else{try{const k="globe-best-"+mode,b=+localStorage.getItem(k)||0;rec.best=b;if(rec.total>b)localStorage.setItem(k,rec.total)}catch(e){}}
+  showFinal(rec)}
+
+function showFinal(rec){const n=rec.rounds.length,best=n*1000,daily=mode==="daily";rounds=rec.rounds;marks=rounds.map(markOf);
+  show("stage",false);document.querySelector(".hint").classList.add("hide");show("guess",false);show("next",false);
+  $("rd").textContent=daily?`Daily #${rec.day}`:MODES[mode].t;$("tot").textContent=`Score ${fmt(rec.total)}`;
+  const rows=rec.rounds.map((r,i)=>{const G=GL[order[i]];return `<tr><td>${i+1}. ${span(G)}</td><td>${r.guess}</td><td>${r.off?r.off+" yr":"exact"}</td><td><b>${fmt(r.pts)}</b>${r.hint?' <span class="tag">hint</span>':""}</td>${daily?`<td class="avg" id="avg${i}">…</td>`:""}</tr>`}).join("");
+  const t=rec.total/best,msg=t>.85?"You could curate a map library.":t>.6?"A solid cartographer's eye.":t>.3?"Not bad. Brush up on the world wars and decolonisation.":"Time to study your atlases.";
+  const s=stats();
+  $("res").innerHTML=`<div class="pts">${fmt(rec.total)} <span style="color:var(--dim);font-size:1rem">/ ${fmt(best)}</span></div><p style="margin:2px 0 6px">${msg}</p>
+   <p style="font-size:1.4rem;margin:4px 0;letter-spacing:2px">${marks.join("")}</p>
+   <table class="bd"><thead><tr><th>Globe (correct years)</th><th>Your guess</th><th>Off by</th><th>Points</th>${daily?"<th>Players' avg</th>":""}</tr></thead><tbody>${rows}</tbody></table>
+   ${daily?`<div id="cmp" class="kicker">Comparing with other players…</div>
+   <div class="stats"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.streak}</b><span>Current streak</span></div><div><b>${s.best}</b><span>Best streak</span></div><div><b>${s.played?fmt(Math.round(s.sum/s.played)):"–"}</b><span>Average score</span></div></div>
+   <p class="kicker">Next set in <b class="cd">${untilMidnight()}</b></p>`:`<p class="kicker">${rec.best?`Your best in ${MODES[mode].t}: ${fmt(Math.max(rec.best,rec.total))}${rec.total>rec.best?" (new best!)":""}`:""}</p>`}`;
+  const url=location.protocol.startsWith("http")?"\n"+location.origin+location.pathname:"";
+  const txt=(daily?`When in the World #${rec.day}`:`When in the World (${MODES[mode].t})`)+` ${fmt(rec.total)}/${fmt(best)}\n${marks.join("")}${url}`;
+  const sb=document.createElement("button");sb.textContent="Copy result to share";
+  sb.onclick=async()=>{try{await navigator.clipboard.writeText(txt);sb.textContent="Copied"}catch(e){sb.textContent="Copy failed";$("res").insertAdjacentHTML("beforeend",`<p>${txt.replace(/\n/g,"<br>")}</p>`)}};
+  const hb=document.createElement("button");hb.className="alt";hb.textContent=daily?"Back to home":"Play again";hb.onclick=()=>daily?home():startUnlimited(mode);
+  $("res").append(sb,hb);
+  if(!daily){const mb=document.createElement("button");mb.className="alt";mb.textContent="Home";mb.onclick=home;$("res").append(mb)}
+  show("res",true);clearInterval(cdTimer);if(daily){cdTimer=setInterval(tickCountdown,1000);compare(rec)}}
+
+// ---------- compare with everyone else (scoreboard server: functions/api/[[path]].js) ----------
+async function compare(rec){const box=$("cmp");
+  try{const r=await fetch(CONFIG.API+"/score",{method:"POST",headers:{"content-type":"application/json"},
+      body:JSON.stringify({date:rec.date,device:dev,total:rec.total,pts:rec.rounds.map(x=>x.pts)})});
+    if(!r.ok)throw new Error(r.status);const s=await r.json();if(!s.n)throw new Error("empty");
+    s.slots.forEach((v,i)=>{const c=$("avg"+i);if(c)c.textContent=fmt(v)});
+    const mine=Math.min(50,Math.floor(rec.total/100));let below=0;for(let b=0;b<mine;b++)below+=s.hist[b];below+=Math.max(0,s.hist[mine]-1)/2;
+    const others=Math.max(1,s.n-1),pct=s.n>1?Math.round(100*below/others):100;
+    const bars=[];for(let g=0;g<10;g++){let c=0;for(let b=g*5;b<g*5+5&&b<51;b++)c+=s.hist[b];if(g===9)c+=s.hist[50];bars.push(c)}
+    const mx=Math.max(1,...bars),myBar=Math.min(9,Math.floor(rec.total/500));
+    box.innerHTML=`<p style="margin:8px 0 2px;color:var(--ink)">Today's average: <b>${fmt(s.avg)}</b> from ${fmt(s.n)} player${s.n===1?"":"s"}. ${s.n>1?`You scored higher than <b>${pct}%</b> of them.`:"You're the first to finish today's set."}</p>
+      <div class="histo" aria-label="How everyone scored today">${bars.map((c,g)=>`<i class="${g===myBar?"me":""}" style="height:${Math.max(3,Math.round(60*c/mx))}px" title="${g*500}–${g*500+499}: ${c}"></i>`).join("")}</div>
+      <div class="ends" style="margin:0"><span>0</span><span>2,500</span><span>5,000</span></div>`}
+  catch(e){box.textContent="Today's averages will appear here once the scoreboard is online.";document.querySelectorAll(".avg").forEach(c=>c.textContent="–")}}
+
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+addEventListener("resize",()=>{if(!$("game").classList.contains("hide"))size()});tick();
+if(GL.length)home();
+</script></body></html>
