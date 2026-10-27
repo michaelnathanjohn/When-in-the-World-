@@ -22,7 +22,7 @@ main{max-width:780px;margin:0 auto;padding:20px 16px 40px;text-align:center}
 #stage{position:relative;width:100%;aspect-ratio:1;max-width:720px;margin:0 auto;touch-action:none}
 canvas{width:100%;height:100%;display:block;cursor:grab}
 .zoom{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;gap:6px}.zoom button{margin:0;padding:0;width:40px;height:40px;font-size:1.3rem;line-height:1}.zoom button#zr{font-size:.8rem}
-.hint{color:var(--dim);font-size:.9rem;margin:2px 0 14px}
+.hint{color:var(--dim);font-size:.9rem;margin:2px 0 14px}.stripe{display:inline-block;width:14px;height:10px;vertical-align:-1px;border:1px solid var(--dim);background:repeating-linear-gradient(135deg,var(--dim) 0 1.5px,transparent 1.5px 5px);margin-left:4px}
 .year{font-size:3.2rem;font-weight:600;color:var(--brass);line-height:1.1;font-variant-numeric:tabular-nums}
 input[type=range]{width:100%;accent-color:var(--brass);height:36px}
 .ends{display:flex;justify-content:space-between;color:var(--dim);font-size:.85rem;margin-top:-6px}
@@ -47,7 +47,7 @@ table.bd th{color:var(--dim);font-weight:400;font-size:.75rem;line-height:1.2}.t
 <div id="menu" class="menu card"></div>
 <div id="game" class="hide"><div class="bar"><span id="rd"></span><span id="tot"></span></div>
 <div id="stage" class=""><canvas id="cv" tabindex="0" aria-label="Globe. Drag to spin, arrow keys also work."></canvas><div class="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zr" aria-label="Reset zoom">1×</button></div></div>
-<p class="hint">Drag to spin · scroll, pinch or use + / − to zoom. Capitals (◉) and major cities appear once you zoom in.</p>
+<p class="hint">Drag to spin · scroll, pinch or use + / − to zoom. Capitals (◉) and major cities appear once you zoom in. <span class="stripe"></span> Striped areas are colonies or other territories, not independent countries.</p>
 <div id="guess"><div class="year" id="yr">1960</div>
 <input id="sl" type="range" min="1800" max="2025" value="1960" aria-label="Guess a year">
 <div class="ends"><span id="e1">1800</span><span id="e2">2025</span></div>
@@ -94,8 +94,8 @@ let BASE=null;
 function prep(){if(!BASE)BASE=LAND.flatMap(poly=>poly.map(dens));
   // join pieces that share a name (e.g. two "Italy" shapes) so they get one colour and one label
   const byName=new Map();
-  for(const[si,nm]of GL[order[idx]].f){const f={n:nm,...GL[order[idx]].S[si]},o=byName.get(f.n);
-    if(!o)byName.set(f.n,{n:f.n,g:f.g,a:f.a,c:f.c,big:f.a});else{o.g=o.g.concat(f.g);o.a+=f.a;if(f.a>o.big){o.big=f.a;o.c=f.c}}}
+  for(const[si,nm,dp]of GL[order[idx]].f){const f={n:nm,dep:dp,...GL[order[idx]].S[si]},o=byName.get(f.n);
+    if(!o)byName.set(f.n,{n:f.n,g:f.g,a:f.a,c:f.c,big:f.a,dep:f.dep});else{o.g=o.g.concat(f.g);o.a+=f.a;if(f.a>o.big){o.big=f.a;o.c=f.c}}}
   const m=[...byName.values()];
   // neighbours: walk every border at 0.5 degree steps and treat shapes within ~1 degree of each other as touching
   const cell=new Map(),nb=m.map(()=>new Set()),key=(x,y)=>(((x%720)+720)%720)+","+y;
@@ -112,7 +112,7 @@ function prep(){if(!BASE)BASE=LAND.flatMap(poly=>poly.map(dens));
     const nc=[...nb[best]].map(j=>cols[j]).filter(c=>c>=0);let pick=0,ps=-1;
     PAL.forEach((_,c)=>{if(nc.includes(c))return;const sep=nc.length?Math.min(...nc.map(o=>dE(c,o))):1,sc=sep-use[c]*.002;if(sc>ps){ps=sc;pick=c}});
     cols[best]=pick;use[pick]++}
-  FEATS=m.map((f,i)=>({f,col:PAL[cols[i]],ci:cols[i],nb:nb[i],rings:f.g.flatMap(poly=>poly.map(dens))}));
+  FEATS=m.map((f,i)=>({f,dep:!!f.dep,col:PAL[cols[i]],ci:cols[i],nb:nb[i],rings:f.g.flatMap(poly=>poly.map(dens))}));
   LAB=m.filter(f=>f.n!=="Antarctica").sort((a,b)=>b.a-a.a)}
 function vec(lon,lat){const p=lat*rad,l=lon*rad;return[Math.cos(p)*Math.sin(l),Math.sin(p),Math.cos(p)*Math.cos(l)]}
 function dens(r){const out=[];let n=r.length;if(n>1&&r[0][0]===r[n-1][0]&&r[0][1]===r[n-1][1])n--;
@@ -139,7 +139,9 @@ function draw(){if(!cv.width||!order.length||!BASE||!$("game").offsetParent||$("
   ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.clip();
   ctx.lineWidth=.8*d;ctx.strokeStyle="rgba(25,35,35,.6)";
   ctx.beginPath();for(const ring of BASE)trace(ring);ctx.fillStyle="#7d8b78";ctx.fill("evenodd");
-  for(const o of FEATS){ctx.beginPath();for(const ring of o.rings)trace(ring);ctx.fillStyle=o.col;ctx.fill("evenodd");ctx.stroke()}
+  for(const o of FEATS){ctx.beginPath();for(const ring of o.rings)trace(ring);ctx.fillStyle=o.col;ctx.fill("evenodd");
+    if(o.dep){ctx.fillStyle=hatch(d);ctx.fill("evenodd")}   // colonies and other territories are striped
+    ctx.stroke()}
   // engraved-style grid in brown ink: every 15 degrees, plus the equator, tropics and polar circles
   const line=(pts)=>{let pen=false;for(const[l,a]of pts){const p=P(l,a);if(p[2]>0){pen?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);pen=true}else pen=false}};
   const par=a=>{const o=[];for(let l=-180;l<=180;l+=3)o.push([l,a]);return o},mer=l=>{const o=[];for(let a=-90;a<=90;a+=3)o.push([l,a]);return o};
@@ -204,6 +206,10 @@ function draw(){if(!cv.width||!order.length||!BASE||!$("game").offsetParent||$("
   hl=ctx.createRadialGradient(0,0,0,0,0,R*.07);hl.addColorStop(0,`rgba(255,255,255,${.3*k})`);hl.addColorStop(1,"rgba(255,255,255,0)");ctx.fillStyle=hl;ctx.beginPath();ctx.arc(0,0,R*.07,0,7);ctx.fill();
   ctx.restore();
 }
+let HATCH=null,HATCH_D=0;
+function hatch(d){if(HATCH&&HATCH_D===d)return HATCH;const n=Math.round(7*d),c=document.createElement("canvas");c.width=c.height=n;const x=c.getContext("2d");
+  x.strokeStyle="rgba(30,22,10,.5)";x.lineWidth=Math.max(1,1.4*d);x.beginPath();x.moveTo(-1,n+1);x.lineTo(n+1,-1);x.moveTo(-1,1);x.lineTo(1,-1);x.moveTo(n-1,n+1);x.lineTo(n+1,n-1);x.stroke();
+  HATCH_D=d;return HATCH=ctx.createPattern(c,"repeat")}
 function grain(){if(GR)return GR;const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d"),im=x.createImageData(128,128);
   for(let i=0;i<im.data.length;i+=4){im.data[i]=im.data[i+1]=im.data[i+2]=Math.random()*255;im.data[i+3]=20}x.putImageData(im,0,0);return GR=ctx.createPattern(c,"repeat")}
 function tick(){if(auto&&!drag&&zoom<1.5&&!matchMedia("(prefers-reduced-motion: reduce)").matches)lon0+=.15;requestAnimationFrame(tick);if(!drag&&(Math.abs(mom.x)>.02||Math.abs(mom.y)>.02)){lon0+=mom.x;lat0=Math.max(-75,Math.min(75,lat0+mom.y));mom.x*=.94;mom.y*=.94}draw()}
