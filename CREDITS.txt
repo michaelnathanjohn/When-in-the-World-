@@ -1,0 +1,31 @@
+What Year Is This Globe? - data credits, licences and how to rebuild
+
+1. CShapes 2.0 (borders and capitals, 1886 to today)
+   Schvitz, G., Girardin, L., Rüegger, S., Weidmann, N. B., Cederman, L.-E., & Gleditsch, K. S. (2022).
+   "Mapping the International System, 1886-2019: The CShapes 2.0 Dataset." Journal of Conflict Resolution 66(1), 144-161.
+   https://icr.ethz.ch/data/cshapes/
+   LICENCE: Creative Commons BY-NC-SA 4.0, as stated by ETH Zurich on the page above.
+     BY = credit them. NC = no commercial use. SA = share changed data under the same licence.
+     (The copy inside the cshapes R package is labelled GPL >= 2 on CRAN; the dataset owner's terms are the ones to follow.)
+   Used in: data/globes-cshapes.js (simplified, renamed, capitals corrected; shared under CC BY-NC-SA 4.0).
+   BEFORE ANY ADS, PAID FEATURES OR SPONSORSHIP: get written permission from the CShapes authors at ETH Zurich,
+   or replace this data.
+
+2. Historical Basemaps (borders for 1800, 1815, 1880 and the grey land backdrop)
+   Andre Ourednik and contributors, https://github.com/aourednik/historical-basemaps
+   LICENCE: GNU GPL v3. Commercial use is allowed, but anyone you give the data to may share it freely,
+   and you must offer the source (this folder does that).
+   Used in: data/globes-historical-basemaps.js and source/maps.js.
+
+The two sources are kept in separate files on purpose, because their licences are different.
+
+How to rebuild (run from the site folder):
+  1. python source/build_maps.py <path to a historical-basemaps checkout>   -> source/maps.js
+  2. python source/build_globes.py <cshapes_2_gw.topojson.xz>               -> data/globes-cshapes.js and data/globes-historical-basemaps.js
+     The CShapes file ships with the cshapes R package: https://github.com/cran/cshapes (inst/extdata).
+  build_capitals.py holds the capital-city corrections and the capitals for 1800, 1815 and 1880; build_globes.py imports it.
+  Name tables (country names and city names by year) are at the top of build_globes.py.
+
+The scoreboard (daily averages) is functions/api/[[path]].js, which runs on Cloudflare Pages Functions
+with a D1 database connected under the variable name DB. It creates its own tables on first use.
+Game settings (launch date for puzzle #1, whether Unlimited play is open) are in the CONFIG block near the top of the script in index.html.
