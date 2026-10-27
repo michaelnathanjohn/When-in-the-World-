@@ -58,6 +58,9 @@ table.bd th{color:var(--dim);font-weight:400;font-size:.75rem;line-height:1.2}.t
 <footer>Map data: <a href="https://icr.ethz.ch/data/cshapes/">CShapes 2.0</a> (ETH Zürich, CC BY-NC-SA 4.0) and <a href="https://github.com/aourednik/historical-basemaps">Historical Basemaps</a> (GPL v3). <a href="credits.html">Credits, licences and privacy</a></footer>
 <script src="data/globes-historical-basemaps.js"></script>
 <script src="data/globes-cshapes.js"></script>
+<script>/* if the map files were uploaded next to index.html instead of inside data/, load them from there */
+if(!window.HB_GLOBES)document.write('<script src="globes-historical-basemaps.js"><\/script>');
+if(!window.CS_GLOBES)document.write('<script src="globes-cshapes.js"><\/script>');</script>
 <script>
 // every globe comes from data/globes.js (built by build_globes.py): {y, lo, hi, note, f:[[shape, name]], caps:[[lat, lon, name]], cities:[[lat, lon, tier, name]]}
 const GL=(window.HB_GLOBES||[]).map(g=>({...g,S:HB_SHAPES})).concat((window.CS_GLOBES||[]).map(g=>({...g,S:CS_SHAPES}))),THIS_YEAR=new Date().getFullYear();
@@ -65,7 +68,7 @@ if(GL.length&&GL[GL.length-1].hi<THIS_YEAR)GL[GL.length-1].hi=THIS_YEAR;   // no
 const MAXY=Math.max(THIS_YEAR,GL.length?GL[GL.length-1].hi:2025);
 // ---------- settings you can change ----------
 const CONFIG={
-  LAUNCH:"2026-10-26",   // puzzle #1 is played on this date (players' local time). Set it to your launch day.
+  LAUNCH:"2026-10-27",   // puzzle #1 is played on this date (players' local time). Set it to your launch day.
   UNLIMITED:"locked",    // "locked" shows Unlimited play as "coming soon"; "free" lets anyone play it
   API:"/api"             // the scoreboard (Cloudflare Pages Functions in functions/api)
 };
@@ -83,7 +86,7 @@ let order=[],idx=0,total=0,mode="normal",hintUsed=false,marks=[],lon0=0,lat0=20,
 window.onerror=(m,s,l)=>{$("err").textContent="Something went wrong: "+m+" (line "+l+")";$("err").classList.remove("hide")};
 const rad=Math.PI/180;
 const OFFS=[[0,0]];for(const r of [1,2,3])for(const [x,y] of [[0,1],[0,-1],[1.6,0],[-1.6,0],[1.2,.8],[-1.2,.8],[1.2,-.8],[-1.2,-.8]])OFFS.push([x*r,y*r]);
-if(!GL.length){$("menu").classList.add("hide");$("err").textContent="The map files are missing. Open globe-game.html instead, or extract the whole zip folder first (right-click the zip, Extract All) and open index.html from the extracted folder.";$("err").classList.remove("hide")}
+if(!GL.length){$("menu").classList.add("hide");$("err").textContent="The map files did not load. Make sure globes-cshapes.js and globes-historical-basemaps.js were uploaded (inside a data folder, or next to index.html).";$("err").classList.remove("hide")}
 function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d}
 function hash(s){let h=0;for(const c of s)h=h*31+c.charCodeAt(0)|0;return Math.abs(h)}
 let BASE=null;
