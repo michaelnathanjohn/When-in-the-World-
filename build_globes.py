@@ -15,6 +15,55 @@ HB = {1800: (1800, 1802, "Spain still holds Louisiana, the Batavian Republic exi
       1815: (1815, 1818, "After the Congress of Vienna: Prussia, the Austrian Empire and the German states are redrawn, Sweden and Norway share a king, and Latin America is still under Spanish viceroyalties."),
       1880: (1878, 1883, "Germany and Italy are unified, Africa is mostly still independent (the Scramble begins in the 1880s), and the Transvaal and Orange Free State exist.")}
 
+# Historical Basemaps names fixed for the game: name -> new name, or (year, name) -> new name for one globe only
+HB_NAMES = {"Manchu Empire": "Qing Empire", (1880, "Taiwan"): "Taiwan (Qing Empire)",
+    # corrections to the source data
+    (1800, "Hong Kong"): "Qing Empire", (1815, "Hong Kong"): "Qing Empire",            # British only from 1841
+    (1815, "Sikkim (Indian princely state)"): "Sikkim",                                 # British protection only from 1861
+    (1880, "Kingdom of Brazil"): "Empire of Brazil"}                                    # Brazil was an empire 1822-1889
+
+# Colonies, protectorates and other territories on the three early globes, which have no status data.
+# Independence follows Gleditsch & Ward's list of independent states (1816 on) and the Correlates of War
+# state system list; self-governing kingdoms and peoples outside those lists (Asante, Sokoto, Zulu, Aboriginal
+# and Native American nations...) are NOT colonies and stay solid. Value = the label shown (ruler in brackets).
+HB_TERRITORIES = {
+ 1800: {"Acadian Peninsula (UK)": None, "Bahamas": "Bahamas (UK)", "British Guiana": None, "Cape Colony": "Cape Colony (UK)",
+        "Carnatic": "Carnatic (UK)", "Circars": "Northern Circars (UK)", "Madras": "Madras (UK)", "Malabar": "Malabar (UK)",
+        "Kanara": "Kanara (UK)", "Gooty": "Gooty (UK)", "Mysore": "Mysore (UK)", "Travancore": "Travancore (UK)",
+        "Cochin": "Cochin (UK)", "Oudh": "Oudh (UK)", "Nizam's Dominions": "Nizam's Dominions (UK)",
+        "Ceylon (Dutch)": "Ceylon (UK)", "Delagoa Bay": "Delagoa Bay (Portugal)", "Dominica": "Dominica (UK)",
+        "Dutch East Indies": None, "Dutch settlements": None, "Goa": "Goa (Portugal)", "Guanches": "Canary Islands (Spain)",
+        "Luisiana": "Luisiana (Spain)", "Philippines": "Philippines (Spain)", "Portuguese East Africa": None,
+        "Portuguese Guinea": None, "Quebec": "Quebec (UK)", "Rupert's Land": "Rupert's Land (UK)", "Senegal": "Senegal (France)",
+        "Venetia": "Venetia (Austria)", "Viceroyalty of Brazil": "Viceroyalty of Brazil (Portugal)",
+        "Viceroyalty of New Granada": "Viceroyalty of New Granada (Spain)", "Viceroyalty of New Spain": "Viceroyalty of New Spain (Spain)",
+        "Viceroyalty of Peru": "Viceroyalty of Peru (Spain)", "Viceroyalty of the Río de la Plata": "Viceroyalty of the Río de la Plata (Spain)",
+        "Zanzibar": "Zanzibar (Oman)", "Austrian Netherlands": "Southern Netherlands (France)",
+        "Paraguay": "Paraguay (Spain)"},   # independent only from 1811
+ 1815: {"Angola": "Angola (Portugal)", "British East India Company": None, "Canada": "Canada (UK)", "Cape Colony": "Cape Colony (UK)",
+        "Ceylon": "Ceylon (UK)", "Delagoa Bay": "Delagoa Bay (Portugal)", "Dominica": "Dominica (UK)", "Dutch East Indies": None,
+        "Egypt": "Egypt (Ottoman Empire)", "Goa": "Goa (Portugal)", "Guadeloupe": "Guadeloupe (France)", "Guiana": "Guiana (UK and Netherlands)",
+        "Guanches": "Canary Islands (Spain)", "Lombardy": "Lombardy (Austria)", "Venetia": "Venetia (Austria)",
+        "Mysore (Indian princely state)": "Mysore (UK)", "Travancore": "Travancore (UK)", "Oudh": "Oudh (UK)",
+        "New South Wales": "New South Wales (UK)", "Philippines": "Philippines (Spain)", "Portuguese East Africa": None,
+        "Portuguese Guinea": None, "Russian America": None, "Senegal": "Senegal (UK)", "Sierra Leone": "Sierra Leone (UK)",
+        "Trinidad": "Trinidad (UK)", "Viceroyalty of Brazil": "Viceroyalty of Brazil (Portugal)",
+        "Viceroyalty of New Granada": "Viceroyalty of New Granada (Spain)", "Viceroyalty of New Spain": "Viceroyalty of New Spain (Spain)",
+        "Viceroyalty of Peru": "Viceroyalty of Peru (Spain)", "Zanzibar": "Zanzibar (Oman)"},
+ 1880: {"Alaska (U.S. territory)": None, "Algeria (FR)": "Algeria (France)", "Angola (Portugal)": None, "Basutoland": "Basutoland (UK)",
+        "Belize": "British Honduras (UK)", "Bokhara Khanate": "Bokhara Khanate (Russia)", "Bosnia-Herzegovina": None,
+        "British Guiana": None, "British Raj": None, "Cape Colony": "Cape Colony (UK)", "Ceylon": "Ceylon (UK)", "Cotonou": "Cotonou (France)",
+        "Dominica": "Dominica (UK)", "Dutch Guiana": None, "Egypt": "Egypt (Ottoman Empire)", "Fiji": "Fiji (UK)", "French Guiana": None,
+        "French Indochina": None, "Gabon": "Gabon (France)", "Gambia": "Gambia (UK)", "Gold Coast (GB)": "Gold Coast (UK)",
+        "Greenland": "Greenland (Denmark)", "Griqualand West": "Griqualand West (UK)", "Guadeloupe": "Guadeloupe (France)",
+        "Harer (Egypt)": None, "Hong Kong": "Hong Kong (UK)", "Iceland": "Iceland (Denmark)", "Ivory Coast": "Ivory Coast (France)",
+        "Lagos": "Lagos (UK)", "Malaya": "Malaya (UK)", "Mozambique": "Mozambique (Portugal)", "Natal": "Natal (UK)",
+        "Netherlands Indies": None, "New South Wales (UK)": None, "Northern Territory (UK)": None, "Philippines": "Philippines (Spain)",
+        "Portuguese Guinea": None, "Qatar": "Qatar (Ottoman Empire)", "Queensland (UK)": None, "Senegal (FR)": "Senegal (France)",
+        "Sierra Leone": "Sierra Leone (UK)", "South Australia (UK)": None, "Spanish Guinea": None, "Trucial Oman": "Trucial Oman (UK)",
+        "Victoria (UK)": None, "Western Australia (UK)": None},
+}
+
 # ---- country names as used at the time (CShapes name -> [(before this year, old name)]) ----
 # Names as people used them at the time. "name": [(before this year, old name), ...]; the cleaned name is the default.
 OVR = {
@@ -36,6 +85,7 @@ OVR = {
  "Cote D'Ivoire": [(9999,"Ivory Coast")], "New Guinea (German New Guinea) (Kaiser Wilhelmsland)": [(9999,"New Guinea (Australia)")],
  "Papua": [(9999,"Papua (Australia)")], "Papua New Guinea": [(1975,"Papua and New Guinea")],
  "West Irian (Dutch New Guinea)": [(9999,"Dutch New Guinea")], "Taiwan": [(1946,"Formosa (Japan)")],
+ "China": [(1912,"Qing Empire"),(1950,"Republic of China")],   # PRC founded Oct 1949, after that year's July snapshot
  "Alaska": [(1959,"Alaska (U.S. territory)")], "Hawaii": [(1898,"Kingdom of Hawaii"),(1959,"Hawaii (U.S. territory)")],
  "Indonesia": [(1949,"Dutch East Indies")], "Ghana": [(1957,"Gold Coast")], "Kenya": [(1920,"British East Africa"),(1963,"Kenya Colony")],
  "Zambia": [(1964,"Northern Rhodesia")], "Malawi": [(1964,"Nyasaland")], "Uganda": [(1962,"Uganda Protectorate")],
@@ -53,7 +103,7 @@ OVR = {
 DEFAULT = {"Congo, Democratic Republic of (Zaire)": "D.R. Congo", "Swaziland (Eswatini)": "Eswatini",
  "Macedonia (FYROM/North Macedonia)": "North Macedonia", "Vietnam, Democratic Republic of": "Vietnam",
  "Yemen (Arab Republic of Yemen)": "Yemen", "Yugoslavia": "Yugoslavia",
- "German Federal Republic": "Germany", "German Democratic Republic": "East Germany"}   # CShapes treats reunified Germany (Oct 1990) as the FRG continuing
+ "German Federal Republic": "Germany", "German Democratic Republic": "East Germany", "China": "People's Republic of China"}   # CShapes treats reunified Germany (Oct 1990) as the FRG continuing
 def era_name(name, y):
     rules = OVR.get(name)
     if rules:
@@ -145,7 +195,79 @@ CITIES = [[40.7, -74, 1, "1800:New York"],
  [56.85, 60.6, 3, "1800:Yekaterinburg|1924:Sverdlovsk|1991:Yekaterinburg"],
  [53.2, 50.1, 3, "1800:Samara|1935:Kuybyshev|1991:Samara"],
  [55, 82.9, 3, "1893:Novonikolayevsk|1926:Novosibirsk"],
- [21, 105.85, 3, "1800:Thang Long|1831:Hanoi"]]
+ [21, 105.85, 3, "1800:Thang Long|1831:Hanoi"],
+ [41.88, -87.63, 1, "1833:Chicago"],
+ [34.05, -118.24, 1, "1781:Los Angeles"],
+ [37.77, -122.42, 2, "1847:San Francisco"],
+ [42.36, -71.06, 2, "1800:Boston"],
+ [39.95, -75.17, 2, "1800:Philadelphia"],
+ [29.95, -90.07, 2, "1800:New Orleans"],
+ [29.76, -95.37, 2, "1836:Houston"],
+ [47.61, -122.33, 2, "1851:Seattle"],
+ [39.74, -104.99, 3, "1858:Denver"],
+ [25.76, -80.19, 3, "1896:Miami"],
+ [42.33, -83.05, 3, "1800:Detroit"],
+ [33.45, -112.07, 3, "1868:Phoenix"],
+ [44.98, -93.27, 3, "1800:Saint Paul|1867:Minneapolis"],
+ [43.65, -79.38, 1, "1793:York|1834:Toronto"],
+ [45.5, -73.57, 2, "1800:Montreal"],
+ [49.28, -123.12, 2, "1886:Vancouver"],
+ [53.55, -113.49, 3, "1904:Edmonton"],
+ [-23.55, -46.63, 1, "1800:São Paulo"],
+ [-12.97, -38.5, 2, "1800:Salvador"],
+ [20.67, -103.35, 2, "1800:Guadalajara"],
+ [25.67, -100.31, 3, "1800:Monterrey"],
+ [-31.42, -64.18, 3, "1800:Córdoba"],
+ [-33.05, -71.62, 3, "1800:Valparaíso"],
+ [6.25, -75.56, 3, "1800:Medellín"],
+ [-3.12, -60.02, 3, "1800:Barra do Rio Negro|1856:Manaus"],
+ [43.12, 131.89, 2, "1860:Vladivostok"],
+ [52.29, 104.28, 3, "1800:Irkutsk"],
+ [55.79, 49.11, 3, "1800:Kazan"],
+ [46.48, 30.72, 2, "1800:Odessa"],
+ [62.03, 129.73, 3, "1800:Yakutsk"],
+ [23.13, 113.26, 1, "1800:Canton|1979:Guangzhou"],
+ [30.59, 114.31, 2, "1800:Hankow|1927:Wuhan"],
+ [41.8, 123.43, 2, "1800:Mukden|1945:Shenyang"],
+ [45.75, 126.65, 2, "1898:Harbin"],
+ [22.3, 114.17, 2, "1842:Hong Kong"],
+ [36.07, 120.38, 3, "1800:Tsingtao|1979:Qingdao"],
+ [30.27, 120.15, 3, "1800:Hangchow|1979:Hangzhou"],
+ [29.56, 106.55, 3, "1800:Chungking|1979:Chongqing"],
+ [12.97, 77.59, 2, "1800:Bangalore|2014:Bengaluru"],
+ [17.39, 78.49, 2, "1800:Hyderabad"],
+ [24.86, 67.0, 2, "1800:Karachi"],
+ [31.55, 74.34, 2, "1800:Lahore"],
+ [26.85, 80.95, 3, "1800:Lucknow"],
+ [23.02, 72.57, 3, "1800:Ahmedabad"],
+ [34.69, 135.5, 2, "1800:Osaka"],
+ [35.01, 135.77, 3, "1800:Kyoto"],
+ [43.06, 141.35, 3, "1868:Sapporo"],
+ [-37.81, 144.96, 1, "1835:Melbourne"],
+ [-31.95, 115.86, 2, "1829:Perth"],
+ [-27.47, 153.03, 2, "1825:Brisbane"],
+ [-34.93, 138.6, 3, "1836:Adelaide"],
+ [-36.85, 174.76, 3, "1840:Auckland"],
+ [-26.2, 28.05, 1, "1886:Johannesburg"],
+ [31.2, 29.92, 2, "1800:Alexandria"],
+ [33.57, -7.59, 2, "1800:Casablanca"],
+ [12.0, 8.52, 3, "1800:Kano"],
+ [-29.86, 31.03, 3, "1835:Durban"],
+ [21.42, 39.83, 2, "1800:Mecca"],
+ [32.07, 34.78, 2, "1909:Tel Aviv"],
+ [21.49, 39.19, 3, "1800:Jeddah"],
+ [32.65, 51.67, 3, "1800:Isfahan"],
+ [36.2, 37.16, 3, "1800:Aleppo"],
+ [45.46, 9.19, 2, "1800:Milan"],
+ [41.39, 2.17, 2, "1800:Barcelona"],
+ [53.55, 9.99, 2, "1800:Hamburg"],
+ [53.48, -2.24, 3, "1800:Manchester"],
+ [55.95, -3.19, 3, "1800:Edinburgh"],
+ [50.94, 6.96, 3, "1800:Cologne"],
+ [45.76, 4.84, 3, "1800:Lyon"],
+ [43.3, 5.37, 3, "1800:Marseille"],
+ [1.29, 103.85, 2, "1819:Singapore"],
+ [-7.25, 112.75, 3, "1800:Surabaya"]]
 
 def cities_at(y, caps):
     out = []
@@ -218,7 +340,7 @@ def main():
     def state(y):
         date = f"{min(y, LAST_DATA_YEAR)}-07-01" if y <= LAST_DATA_YEAR else f"{LAST_DATA_YEAR}-12-31"
         act = [(p, s) for p, s in rows if p["start"] <= date <= p["end"]]
-        feats = sorted([s, era_name(p["country_name"], y)] for p, s in act)
+        feats = sorted([s, territory_name(p, y), 0 if p["status"] == "independent" else 1] for p, s in act)
         caps, seen = [], set()
         for p, s in act:
             if p["country_name"] in SKIP: continue
@@ -236,7 +358,10 @@ def main():
     for y, (lo, hi, note) in HB.items():
         feats = []
         for f in hb[str(y)]:
-            sid = len(HBS); HBS.append({"c": f["c"], "a": f["a"], "g": f["g"]}); feats.append([sid, f["n"]])
+            sid = len(HBS); HBS.append({"c": f["c"], "a": f["a"], "g": f["g"]})
+            terr = HB_TERRITORIES.get(y, {})
+            if f["n"] in terr: feats.append([sid, terr[f["n"]] or f["n"], 1])
+            else: feats.append([sid, HB_NAMES.get((y, f["n"]), HB_NAMES.get(f["n"], f["n"])), 0])
         caps = [[la, lo_, city_name(n, y)] for n, la, lo_ in EARLY[y]]
         globes.append({"y": y, "lo": lo, "hi": hi, "note": note, "f": feats, "caps": caps, "cities": cities_at(y, caps)})
     land = [poly for f in hb["1994"] for poly in f["g"]]
@@ -269,13 +394,28 @@ def main():
     print(len(globes), "globes,", len(SHAPES), "shapes")
     for g in globes: print(g["lo"], g["hi"], len(g["f"]), "|", g["note"][:150])
 
+# Colonies, protectorates and mandates get their ruler in brackets ("Nigeria (UK)") unless the name already says it.
+# "Occupied" areas (wartime occupations, and disputed places such as Western Sahara or Kashmir) are striped in the game
+# but get no ruler's name, so the map does not take sides.
+OWNERS = {"200": "UK", "220": "France", "255": "Germany", "325": "Italy", "230": "Spain", "235": "Portugal", "2": "US",
+          "211": "Belgium", "210": "Netherlands", "300": "Austria-Hungary", "900": "Australia", "560": "South Africa",
+          "740": "Japan", "390": "Denmark", "651": "Egypt", "920": "New Zealand"}
+ALREADY = ("(", "British", "English", "Anglo", "French", "German", "Italian", "Spanish", "Portuguese", "Dutch", "Belgian",
+           "Japanese", "Danish", "Russian", "U.S.", "American", "Australian", "Egyptian", "Trucial")
+def territory_name(p, y):
+    n = era_name(p["country_name"], y)
+    if p["status"] in ("colony", "protectorate", "mandate"):
+        o = OWNERS.get(str(p["owner"])) or ("Russia" if y < 1922 else "USSR") if str(p["owner"]) == "365" else OWNERS.get(str(p["owner"]))
+        if o and o not in n and not any(w in n for w in ALREADY): n = f"{n} ({o})"
+    return n
+
 def describe(a, b, SHAPES):
     """What changed since the previous globe, biggest things first."""
-    an, bn = {n for _, n in a[0]}, {n for _, n in b[0]}
-    size = lambda n, fs: -sum(SHAPES[s]["a"] for s, m in fs if m == n)
-    new = sorted(bn-an, key=lambda n: size(n, b[0]))[:5]; gone = sorted(an-bn, key=lambda n: size(n, a[0]))[:5]
-    ag = {n: tuple(sorted(s for s, m in a[0] if m == n)) for n in an}; bg = {n: tuple(sorted(s for s, m in b[0] if m == n)) for n in bn}
-    moved = sorted([n for n in an & bn if ag[n] != bg[n]], key=lambda n: size(n, b[0]))[:5]
+    an, bn = {x[1] for x in a[0]}, {x[1] for x in b[0]}
+    size = lambda n, fs: -sum(SHAPES[x[0]]["a"] for x in fs if x[1] == n)
+    new = sorted(bn-an, key=lambda n: (size(n, b[0]), n))[:5]; gone = sorted(an-bn, key=lambda n: (size(n, a[0]), n))[:5]
+    ag = {n: tuple(sorted(x[0] for x in a[0] if x[1] == n)) for n in an}; bg = {n: tuple(sorted(x[0] for x in b[0] if x[1] == n)) for n in bn}
+    moved = sorted([n for n in an & bn if ag[n] != bg[n]], key=lambda n: (size(n, b[0]), n))[:5]
     ac, bc = {c[2] for c in a[1]}, {c[2] for c in b[1]}
     cn = sorted(bc-ac)[:5]; cities = sorted({c[3] for c in b[2]}-{c[3] for c in a[2]})[:4]
     out = []
