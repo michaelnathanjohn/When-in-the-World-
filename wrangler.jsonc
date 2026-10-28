@@ -1,0 +1,17 @@
+{
+  "name": "when-in-the-world",
+  "main": "worker.js",
+  "compatibility_date": "2025-09-01",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": globe-scores,
+      "database_id": 904bd6f4-2e5a-41d4-9492-4e57be907ba2
+    }
+  ]
+}
