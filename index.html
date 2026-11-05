@@ -80,7 +80,7 @@ table.bd th{color:var(--dim);font-weight:400;font-size:.75rem;line-height:1.2}.t
 <div id="res" class="card hide"></div><button id="next" class="hide">Next globe</button></div></div>
 <p id="err" class="card hide">Something went wrong.</p>
 <section id="about" class="about"><h2>About When in the World</h2>
-<p>When in the World is a free daily history and geography game. Every day you get five globes, each showing the world as it really looked at some point since 1800: its borders, country names, colonies, capitals and city names. Spin the globe, zoom in, and guess the year.</p>
+<p>When in the World is a free daily history and geography game. Every day you get three globes, each showing the world as it really looked at some point since 1800: its borders, country names, colonies, capitals and city names. Spin the globe, zoom in, and guess the year.</p>
 <p>Each day mixes one map from each era of modern history: the age of empires, the world wars, decolonisation, the Cold War and today. Clues are everywhere: the U.S.S.R. or Austria-Hungary, striped colonies across Africa and Asia, or cities like Leningrad, Constantinople and Bombay. After each guess you learn exactly what dates that map.</p>
 <p>The maps come from the CShapes 2.0 research dataset (ETH Zürich) and Historical Basemaps. It's like a daily geography quiz and a history timeline game in one: no sign-up, nothing to install, and it works on phones and computers.</p></section>
 </main>
@@ -102,7 +102,8 @@ const CONFIG={
   API:"/api",            // the scoreboard (Cloudflare Pages Functions in functions/api)
   CURVE_MIN:20           // show the "how everyone did" curve once this many people have finished the day's set
 };
-const MODES={easy:{pen:15,n:5,t:"Easy"},normal:{pen:25,n:8,t:"Normal"},hard:{pen:50,n:12,t:"Hard"},daily:{pen:25,n:5,t:"Daily"}};
+const MODES={easy:{pen:15,n:5,t:"Easy"},normal:{pen:25,n:8,t:"Normal"},hard:{pen:50,n:12,t:"Hard"},daily:{pen:25,n:3,t:"Daily"}};
+const DAILY_N=MODES.daily.n,MAXS=DAILY_N*1000;   // globes in the daily set and the top daily score
 const _d=new Date(),TODAY=_d.getFullYear()+"-"+String(_d.getMonth()+1).padStart(2,"0")+"-"+String(_d.getDate()).padStart(2,"0");
 // 18 muted atlas colours, picked so every pair is clearly different (OKLab distance >= 0.076)
 const PAL=["#d8b86a","#967dc3","#7cebfe","#e3aeef","#bf784f","#64c7a7","#b3e9a7","#ec9695","#fdcac0","#97aef4","#a2a453","#ca84b3","#d6d2fd","#f2d585","#9dcce4","#c8a4c3","#b7cca4","#c19188"];
@@ -317,13 +318,13 @@ function explain(gi,y,off){const G=GL[gi],here=new Map();
   return html||`<p>${G.note}</p>`}
 
 // ---------- daily schedule ----------
-// Puzzle #1 is CONFIG.LAUNCH. History is split into five eras with the same number of globes in each;
+// Puzzle #1 is CONFIG.LAUNCH. History is split into three eras (one per daily globe) with the same number of globes in each;
 // every day gets one globe from each era, in a shuffled order. Within an era no globe repeats until
 // all of that era's globes have been used (about three weeks), then the era is reshuffled.
 function dayNumber(){const[a,b,c]=CONFIG.LAUNCH.split("-").map(Number),n=new Date();
   return Math.max(1,Math.round((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())-Date.UTC(a,b-1,c))/864e5)+1)}
 const DAY=dayNumber();
-const ERAS=(()=>{const ids=[...GL.keys()].sort((a,b)=>GL[a].lo-GL[b].lo);return [0,1,2,3,4].map(j=>ids.slice(Math.round(j*ids.length/5),Math.round((j+1)*ids.length/5)))})();
+const ERAS=(()=>{const ids=[...GL.keys()].sort((a,b)=>GL[a].lo-GL[b].lo);return [...Array(DAILY_N).keys()].map(j=>ids.slice(Math.round(j*ids.length/DAILY_N),Math.round((j+1)*ids.length/DAILY_N)))})();
 function shuffled(arr,seed){const a=[...arr],r=rng(hash(seed));for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 // each era's order for cycle c; globes used at the end of the previous cycle are moved back so nothing repeats within about two weeks
 const CYC={};
@@ -344,7 +345,7 @@ function untilMidnight(){const n=new Date(),m=new Date(n.getFullYear(),n.getMont
 function tickCountdown(){document.querySelectorAll(".cd").forEach(e=>e.textContent=untilMidnight());if(dayNumber()!==DAY)location.reload()}
 function stats(){const s=store.get("wyitg-stats",{played:0,streak:0,best:0,last:0,sum:0,top:0});if(s.last<DAY-1)s.streak=0;return s}
 function home(){mode="daily";document.body.classList.remove("playing");show("game",false);show("menu",true);order=dailySet(DAY);const s=stats();let rec=store.get("wyitg-day-"+TODAY,null);if(rec&&!goodRec(rec))rec=null;
-  const label=rec&&rec.done?"See today's results":rec&&rec.rounds.length?"Continue today's set":"Play today's 5 globes";
+  const label=rec&&rec.done?"See today's results":rec&&rec.rounds.length?"Continue today's set":`Play today's ${DAILY_N} globes`;
   let h=`<p class="kicker">Daily set #${DAY} · ${new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric"})}</p>
   <button class="big" id="playDaily">${label}<small>One globe from each era of history. Same set for everyone today.</small></button>
   ${rec&&rec.done?`<p class="kicker" style="margin-top:10px">Next set in <b class="cd">${untilMidnight()}</b></p>`:""}
@@ -360,7 +361,7 @@ function home(){mode="daily";document.body.classList.remove("playing");show("gam
 function begin(){clearInterval(cdTimer);document.body.classList.add("playing");$("game").classList.remove("final");show("menu",false);show("game",true);show("stage",true);document.querySelector(".hint").classList.remove("hide");fit();size();
   if(idx>=order.length){finish();return}load()}
 const sig=()=>order.map(i=>GL[i]?GL[i].lo+"-"+GL[i].hi:"?").join(",");
-// a saved day only counts if it was played on the same five globes; anything else (an old version of the game, a broken save) is thrown away
+// a saved day only counts if it was played on the same globes; anything else (an old version of the game, a broken save) is thrown away
 function goodRec(rec){return !!rec&&Array.isArray(rec.rounds)&&rec.rounds.length<=order.length&&rec.rounds.every(r=>r&&Number.isFinite(r.pts)&&Number.isFinite(r.guess))&&(rec.done?rec.rounds.length===order.length:true)&&(rec.sig?rec.sig===sig():!rec.done)}
 function startDaily(){mode="daily";order=dailySet(DAY);let rec=store.get("wyitg-day-"+TODAY,null);if(rec&&!goodRec(rec)){rec=null;try{localStorage.removeItem("wyitg-day-"+TODAY)}catch(e){}}
   if(rec&&rec.done){show("menu",false);show("game",true);showFinal(rec);return}
@@ -413,19 +414,19 @@ function showFinal(rec){$("game").classList.add("final");const n=rec.rounds.leng
 
 // ---------- the "how everyone did" curve ----------
 // A smooth bell-style curve drawn from today's real scores (51 buckets of 100 points), with everyone you beat shaded in
-function scoreCurve(hist,mine,avg,pct,scores){const W=320,X0=12,X1=308,BASE=86,TOP=24,X=v=>X0+(X1-X0)*Math.min(5000,Math.max(0,v))/5000;
+function scoreCurve(hist,mine,avg,pct,scores){const W=320,X0=12,X1=308,BASE=86,TOP=24,X=v=>X0+(X1-X0)*Math.min(MAXS,Math.max(0,v))/MAXS;
   let n=0,m=0;hist.forEach((c,b)=>{n+=c;m+=c*(b*100+50)});m/=Math.max(1,n);let v=0;hist.forEach((c,b)=>{v+=c*(b*100+50-m)**2});
   const sd=Math.sqrt(v/Math.max(1,n)),h=Math.max(260,1.06*sd*Math.pow(Math.max(1,n),-.2));   // smoothing width
-  const pts=[];for(let x=0;x<=5000;x+=50){let y=0;hist.forEach((c,b)=>{if(c)y+=c*Math.exp(-.5*((x-(b*100+50))/h)**2)});pts.push([x,y])}
+  const pts=[];for(let x=0;x<=MAXS;x+=50){let y=0;hist.forEach((c,b)=>{if(c)y+=c*Math.exp(-.5*((x-(b*100+50))/h)**2)});pts.push([x,y])}
   const mx=Math.max(...pts.map(p=>p[1]))||1,Y=y=>BASE-(BASE-TOP)*y/mx;
   const line=pts.map((p,i)=>(i?"L":"M")+X(p[0]).toFixed(1)+" "+Y(p[1]).toFixed(1)).join(" ");
-  const area=line+` L${X(5000)} ${BASE} L${X(0)} ${BASE} Z`;
+  const area=line+` L${X(MAXS)} ${BASE} L${X(0)} ${BASE} Z`;
   const yAt=x=>{const i=Math.min(pts.length-1,Math.max(0,Math.round(x/50)));return Y(pts[i][1])};
   let dotNote="";const total=hist.reduce((a,c)=>a+c,0);
   const mxX=X(mine),myY=yAt(mine),label=pct===null?"You":`You: better than ${pct}%`,anchor=mxX<70?"start":mxX>W-70?"end":"middle";
   // one dot per player, stacked in their 100-point band (gold = players you beat); on busy days a dot stands for k players
-  const colW=(X1-X0)/51,r=Math.min(2.4,colW*.42),gap=r*2.15,maxDots=Math.floor((BASE-TOP-2)/gap),top=Math.max(...hist),k=Math.max(1,Math.ceil(top/maxDots));
-  const myB=Math.min(50,Math.floor(mine/100));let dots="";
+  const colW=(X1-X0)/(MAXS/100+1),r=Math.min(2.4,colW*.42),gap=r*2.15,maxDots=Math.floor((BASE-TOP-2)/gap),top=Math.max(...hist),k=Math.max(1,Math.ceil(top/maxDots));
+  const myB=Math.min(MAXS/100,Math.floor(mine/100));let dots="";
   if(scores&&scores.length){   // exact scores: a beeswarm, each dot at its real score, stacked only where dots would overlap
     const others=[...scores];const me=others.indexOf(mine);if(me>=0)others.splice(me,1);
     const pts=others.map(v=>[v,0]).concat([[mine,1]]).sort((a,b)=>a[0]-b[0]),R2=Math.min(2.6,(X1-X0)/150),step=R2*2.1,levels=[];
@@ -436,13 +437,11 @@ function scoreCurve(hist,mine,avg,pct,scores){const W=320,X0=12,X1=308,BASE=86,T
       const y=BASE-R2-.6-lv*step,beat=v<mine;
       dots+=isMe?`<circle data-s="${v}" data-me="1" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(R2+1.1).toFixed(1)}" style="fill:var(--brass);stroke:var(--ink);stroke-width:1.2"/>`
                 :`<circle data-s="${v}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${R2.toFixed(1)}" style="fill:${beat?"var(--brass)":"var(--dim)"};opacity:${beat?.85:.6}"/>`});
-    const shown=scores.length<total?` · latest ${scores.length} of ${fmt(total)} shown`:"";
-    dotNote=`${kk>1?`Each dot = ${kk} players. `:""}Hover over or tap a dot to see that score${shown}.`;
+    dotNote="Hover over or tap a dot to see that score.";
   } else hist.forEach((c,b)=>{const nd=Math.ceil(c/k),cx=X0+colW*(b+.5);
     for(let j=0;j<nd;j++){const me=b===myB&&j===nd-1,cy=BASE-r-.6-j*gap;
       dots+=me?`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(r+1).toFixed(1)}" style="fill:var(--brass);stroke:var(--ink);stroke-width:1.2"/>`
               :`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" style="fill:${b<myB?"var(--brass)":"var(--dim)"};opacity:${b<myB?.85:.6}"/>`}});
-  if(!dotNote&&k>1)dotNote=`Each dot = ${k} players.`;
   return `<svg class="curve" viewBox="0 0 ${W} 108" role="img" aria-label="How everyone scored today. ${label}.">
         <path d="${area}" style="fill:var(--dim);opacity:.12"/>
     ${dots}
@@ -453,7 +452,7 @@ function scoreCurve(hist,mine,avg,pct,scores){const W=320,X0=12,X1=308,BASE=86,T
     <line x1="${mxX}" x2="${mxX}" y1="${BASE}" y2="16" style="stroke:var(--ink);stroke-width:1.5"/>
     <text x="${anchor==="start"?mxX-2:anchor==="end"?mxX+2:mxX}" y="11" text-anchor="${anchor}" style="fill:var(--ink);font-size:11px;font-weight:600">${label}</text>
     <g class="tip" style="display:none;pointer-events:none"><rect rx="3" height="15" style="fill:var(--ink)"/><text y="11" text-anchor="middle" style="fill:var(--bg);font-size:9.5px;font-weight:600"></text></g>
-    <text x="${X0}" y="104" style="fill:var(--dim);font-size:9px">0</text><text x="${X1}" y="104" text-anchor="end" style="fill:var(--dim);font-size:9px">5,000</text>
+    <text x="${X0}" y="104" style="fill:var(--dim);font-size:9px">0</text><text x="${X1}" y="104" text-anchor="end" style="fill:var(--dim);font-size:9px">${fmt(MAXS)}</text>
   </svg>${dotNote?`<p class="kicker" style="font-size:.75rem;margin:0;text-align:center">${dotNote}</p>`:""}`}
 
 // hovering (or tapping) near a dot shows that player's exact score
@@ -465,11 +464,11 @@ function dotTips(sv){const tip=sv.querySelector(".tip"),r=tip.querySelector("rec
     const tx=Math.min(318-w/2,Math.max(2+w/2,x));tip.setAttribute("transform",`translate(${tx},${Math.max(0,y-22)})`);r.setAttribute("x",-w/2);r.setAttribute("width",w)};
   sv.addEventListener("pointermove",pick);sv.addEventListener("pointerdown",pick);sv.addEventListener("pointerleave",()=>tip.style.display="none")}
 
-// before CURVE_MIN players: a simple bar chart (10 bars of 500 points), your bar highlighted
-function scoreBars(hist,mine){const bars=[];for(let g=0;g<10;g++){let c=0;for(let b=g*5;b<g*5+5;b++)c+=hist[b]||0;if(g===9)c+=hist[50]||0;bars.push(c)}
-  const mx=Math.max(1,...bars),me=Math.min(9,Math.floor(mine/500));
-  return `<div class="histo" aria-label="How everyone scored today">${bars.map((c,g)=>`<i class="${g===me?"me":""}" style="height:${c?Math.max(6,Math.round(60*c/mx)):3}px" title="${fmt(g*500)}–${fmt(g*500+499)}: ${c} player${c===1?"":"s"}"></i>`).join("")}</div>
-  <div class="ends" style="margin:0"><span>0</span><span>2,500</span><span>5,000</span></div>`}
+// before CURVE_MIN players: a simple bar chart (10 equal bars from 0 to the top score), your bar highlighted
+function scoreBars(hist,mine){const per=MAXS/1000,bars=[];for(let g=0;g<10;g++){let c=0;for(let b=g*per;b<g*per+per;b++)c+=hist[b]||0;if(g===9)c+=hist[MAXS/100]||0;bars.push(c)}
+  const mx=Math.max(1,...bars),me=Math.min(9,Math.floor(mine/(MAXS/10)));
+  return `<div class="histo" aria-label="How everyone scored today">${bars.map((c,g)=>`<i class="${g===me?"me":""}" style="height:${c?Math.max(6,Math.round(60*c/mx)):3}px" title="${fmt(g*MAXS/10)}–${fmt((g+1)*MAXS/10-1)}"></i>`).join("")}</div>
+  <div class="ends" style="margin:0"><span>0</span><span>${fmt(MAXS/2)}</span><span>${fmt(MAXS)}</span></div>`}
 
 // ---------- compare with everyone else (scoreboard server: functions/api/[[path]].js) ----------
 async function compare(rec){const box=$("cmp");
@@ -477,9 +476,9 @@ async function compare(rec){const box=$("cmp");
       body:JSON.stringify({date:rec.date,device:dev,total:rec.total,pts:rec.rounds.map(x=>x.pts)})});
     if(!r.ok)throw new Error(r.status);const s=await r.json();if(!s.n)throw new Error("empty");
     s.slots.forEach((v,i)=>{const c=$("avg"+i);if(c)c.textContent=fmt(v)});
-    const mine=Math.min(50,Math.floor(rec.total/100));let below=0;for(let b=0;b<mine;b++)below+=s.hist[b];below+=Math.max(0,s.hist[mine]-1)/2;
+    const mine=Math.min(MAXS/100,Math.floor(rec.total/100));let below=0;for(let b=0;b<mine;b++)below+=s.hist[b];below+=Math.max(0,s.hist[mine]-1)/2;
     const others=Math.max(1,s.n-1),pct=s.n>1?Math.round(100*below/others):100;
-    box.innerHTML=`<p style="margin:8px 0 2px;color:var(--ink)">Today's average: <b>${fmt(s.avg)}</b> from ${fmt(s.n)} player${s.n===1?"":"s"}. ${s.n>1?`You scored higher than <b>${pct}%</b> of them.`:"You're the first to finish today's set."}</p>
+    box.innerHTML=`<p style="margin:8px 0 2px;color:var(--ink)">Today's average: <b>${fmt(s.avg)}</b>.${s.n>1?` You scored higher than <b>${pct}%</b> of players.`:""}</p>
       ${s.n>=CONFIG.CURVE_MIN?scoreCurve(s.hist,rec.total,s.avg,pct,s.scores):scoreBars(s.hist,rec.total)}`;
     const sv=box.querySelector("svg.curve");if(sv)dotTips(sv)}
   catch(e){box.textContent="Today's averages will appear here once the scoreboard is online.";document.querySelectorAll(".avg").forEach(c=>c.textContent="–")}}
